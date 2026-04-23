@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SentiScroll AI | Emotion-Aware Agentic Feed</title>
+    <meta name="description" content="SentiScroll AI uses real-time facial emotion detection to autonomously curate your video feed — protecting you from digital content fatigue.">
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="app-container">
+
+        <!-- ===== LEFT PANEL: Vision + Biometrics ===== -->
+        <aside class="panel" id="left-panel">
+            <div class="sidebar-header">
+                <h1 class="logo">SENTISCROLL</h1>
+                <span class="status-badge" id="agent-badge">Agent: Active</span>
+            </div>
+
+            <!-- Webcam + canvas overlay -->
+            <div id="vision-viewport">
+                <video id="webcam" autoplay playsinline></video>
+                <canvas id="output_canvas"></canvas>
+                <div id="vision-label">BIOMETRIC FEED</div>
+            </div>
+
+            <!-- HUD Stats -->
+            <div class="hud-stats">
+                <div class="hud-item">
+                    BIOMETRIC
+                    <span id="bio-status" class="hud-value">CONNECTING...</span>
+                </div>
+                <div class="hud-item" style="border-left-color: var(--secondary);">
+                    VISION_FPS
+                    <span id="fps" class="hud-value">0.0</span>
+                </div>
+                <div class="hud-item" style="border-left-color: var(--accent);">
+                    MOOD_MODE
+                    <span id="mood-label" class="hud-value">TRENDING</span>
+                </div>
+            </div>
+
+            <!-- Live Emotion Radar -->
+            <div class="section-label">EMOTION RADAR</div>
+            <div class="chart-area" id="emotion-radar">
+                <span class="chart-placeholder">Awaiting Biometric Data...</span>
+            </div>
+        </aside>
+
+        <!-- ===== MAIN FEED: YouTube Player ===== -->
+        <main id="feed-viewport">
+            <!-- HUD Overlays (top-left) -->
+            <div class="hud-overlay">
+                <div class="hud-item">WATCH_STATE: <span style="color:var(--primary);">ACTIVE</span></div>
+                <div id="ai-action-indicator" class="hud-item action-hud" style="display:none;">
+                    AI_ACTION: AUTO_SKIPPING...
+                </div>
+            </div>
+
+            <!-- Scan lines decorative overlay -->
+            <div class="scanlines"></div>
+
+            <!-- YouTube Player -->
+            <div id="player-container">
+                <div id="player"></div>
+            </div>
+
+            <!-- Mode Buttons (bottom-right) -->
+            <div id="scroll-overlay">
+                <button id="btn-auto" class="active" onclick="toggleAgent()" title="Toggle AI Agent">AUTO</button>
+                <button id="btn-next" onclick="nextVideo()" title="Skip to next video">SKIP</button>
+            </div>
+
+            <!-- Corner watermark -->
+            <div class="corner-mark">SentiScroll AI v1.0</div>
+        </main>
+
+        <!-- ===== RIGHT PANEL: Neural Insights ===== -->
+        <aside class="panel" id="right-panel">
+            <div class="sidebar-header">
+                <h2 class="panel-title">Neural Insights</h2>
+                <p class="panel-sub">Gemini 1.5 Flash · Internal Reasoning</p>
+            </div>
+
+            <!-- Agent Decision Log -->
+            <div class="section-label">AGENT LOG</div>
+            <div id="ai-logs">
+                <p class="log-system">[SYSTEM] Booting cognitive layer...</p>
+                <p class="log-entry">[SYSTEM] Initializing Agent Loop...</p>
+            </div>
+
+            <!-- Controls -->
+            <div class="controls" id="start-panel">
+                <button id="btn-start" onclick="startSentiScroll()">
+                    <span class="btn-icon">▶</span> START AI SYSTEM
+                </button>
+            </div>
+
+            <div class="controls" id="active-controls" style="display:none;">
+                <button onclick="nextVideo()">Manual Next</button>
+                <button onclick="toggleAgent()" id="agent-toggle-btn">Pause Agent</button>
+            </div>
+
+            <!-- Mood Selector -->
+            <div class="section-label" style="margin-top:16px;">FORCE MOOD</div>
+            <div class="mood-grid">
+                <button class="mood-btn" onclick="forceMood('trending')">📈 Trending</button>
+                <button class="mood-btn" onclick="forceMood('happySongs')">😊 Happy</button>
+                <button class="mood-btn" onclick="forceMood('calm')">🌊 Calm</button>
+                <button class="mood-btn" onclick="forceMood('imagineDragons')">⚡ Energy</button>
+            </div>
+        </aside>
+
+    </div>
+
+    <!-- YouTube IFrame API -->
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script type="module" src="app.js"></script>
+
+    <!-- Expose forceMood to global scope from module -->
+    <script>
+        window.forceMood = function(mood) {
+            // Dispatches to the module via a custom event
+            window.dispatchEvent(new CustomEvent('sentiscroll:forcemood', { detail: { mood } }));
+        };
+    </script>
+</body>
+</html>

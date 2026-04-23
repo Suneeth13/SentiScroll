@@ -1,0 +1,15 @@
+### Proposed Solution: UniShop AI – The Agentic Universal Shopping Bridge
+
+UniShop AI is a platform-agnostic browser extension designed to provide a "Universal Rufus" experience across any e-commerce platform. It employs an agentic GenAI architecture to bridge the gap between unstructured web content and precise consumer intent.
+
+#### Key Architectural Components:
+1. **Semantic DOM Compressor (SDC):** Instead of processing raw, token-heavy HTML, the system uses a specialized agent to perform "Semantic Abstraction." It scans the active page’s DOM to identify and extract product attributes (Price, RPM, Material, Rating) into a unified, structured JSON format in real-time.
+2. **Site-Agnostic Conversation Engine:** A localized chat sidebar powered by a Large Language Model (LLM) that interprets natural language specifications. It maps these requirements against the "Compressed DOM" to perform high-precision filtering that is more powerful than the website's native search bar.
+3. **Normalized UI Overlay:** Regardless of the retailer’s design (Flipkart, Myntra, or a local store), UniShop AI renders consistent, interactive "Product Cards." This allows for seamless "Cross-Site Normalization," where a user can compare a fan on site A with a fan on site B using the same interface.
+
+#### Novelty & Feasibility:
+- **Universal Reach:** Unlike Rufus, it is not a "walled garden." It works on any site that renders products in the browser, making it a universal tool for the Indian consumer.
+- **Agentic Autonomy:** The system can be programmed to perform "Comparative Discovery"—automatically checking if the product currently being viewed is available at a better price or specification on a competing tab without the user leaving the page.
+- **Impact:** By reducing "Search Friction" and "Tab Fatigue," UniShop AI directly empowers the average Indian consumer to navigate the complex digital economy with professional-grade analytical tools.
+
+This solution presents a buildable, high-impact prototype for Stage 3, utilizing modern Chrome Extension APIs and Multimodal GenAI models.

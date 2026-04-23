@@ -1,0 +1,537 @@
+:root {
+    --bg-color: #05050b;
+    --panel-bg: rgba(15, 15, 25, 0.7);
+    --primary: #00f2ff;
+    --secondary: #bc13fe;
+    --accent: #ff0055;
+    --text: #e0e0e0;
+    --glass: rgba(255, 255, 255, 0.05);
+    --border: rgba(255, 255, 255, 0.1);
+    --font-main: 'Outfit', 'Inter', sans-serif;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text);
+    font-family: var(--font-main);
+    overflow: hidden;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#app-container {
+    width: 100vw;
+    height: 100vh;
+    display: grid;
+    grid-template-columns: 350px 1fr 350px;
+    gap: 20px;
+    padding: 20px;
+    background: radial-gradient(circle at 50% 50%, rgba(20, 20, 40, 1) 0%, rgba(5, 5, 11, 1) 100%);
+}
+
+/* Glass Panels */
+.panel {
+    background: var(--panel-bg);
+    backdrop-filter: blur(15px);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    overflow-y: auto;
+}
+
+/* Sidebar Styling */
+.sidebar-header {
+    margin-bottom: 24px;
+}
+
+.logo {
+    font-size: 1.8rem;
+    font-weight: 800;
+    background: linear-gradient(to right, var(--primary), var(--secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -1px;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 100px;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    background: rgba(0, 242, 255, 0.1);
+    color: var(--primary);
+    border: 1px solid rgba(0, 242, 255, 0.2);
+    margin-top: 5px;
+}
+
+.panel-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+}
+
+.panel-sub {
+    font-size: 0.75rem;
+    color: #888;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+/* Vision Viewport */
+#vision-viewport {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4/3;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #000;
+    border: 1px solid var(--border);
+    margin-bottom: 16px;
+}
+
+#webcam {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+#output_canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+#vision-label {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.65rem;
+    font-family: 'Courier New', Courier, monospace;
+    color: var(--primary);
+    letter-spacing: 1px;
+    pointer-events: none;
+    border: 1px solid rgba(0, 242, 255, 0.2);
+}
+
+/* HUD Stats */
+.hud-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.hud-stats .hud-item {
+    background: rgba(0, 0, 0, 0.5);
+    padding: 10px 14px;
+    border-radius: 10px;
+    border-left: 3px solid var(--primary);
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: #aaa;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.hud-value {
+    color: var(--primary);
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+
+/* Main Feed Styling */
+#feed-viewport {
+    position: relative;
+    border-radius: 30px;
+    overflow: hidden;
+    background: #000;
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#player-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+#player {
+    width: 100%;
+    height: 100%;
+}
+
+/* Scanlines Overlay */
+.scanlines {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.15) 2px,
+        rgba(0, 0, 0, 0.15) 4px
+    );
+    pointer-events: none;
+    z-index: 5;
+    opacity: 0.4;
+}
+
+/* Corner Watermark */
+.corner-mark {
+    position: absolute;
+    bottom: 16px;
+    right: 20px;
+    font-size: 0.65rem;
+    font-family: 'Courier New', Courier, monospace;
+    color: rgba(255, 255, 255, 0.25);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    pointer-events: none;
+    z-index: 10;
+}
+
+/* HUD Overlays */
+.hud-overlay {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.hud-item {
+    background: rgba(0, 0, 0, 0.6);
+    padding: 10px 15px;
+    border-left: 3px solid var(--primary);
+    margin-bottom: 10px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    animation: pulse 2s infinite;
+    border-radius: 0 8px 8px 0;
+}
+
+.action-hud {
+    border-left-color: var(--accent);
+    color: var(--accent);
+    animation: flash 0.8s infinite alternate;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.8; }
+    50% { opacity: 1; border-left-color: var(--secondary); }
+    100% { opacity: 0.8; }
+}
+
+@keyframes flash {
+    0% { opacity: 0.6; }
+    100% { opacity: 1; }
+}
+
+/* Scroll Overlay Buttons */
+#scroll-overlay {
+    position: absolute;
+    bottom: 24px;
+    right: 24px;
+    display: flex;
+    gap: 10px;
+    z-index: 10;
+}
+
+#scroll-overlay button {
+    padding: 12px 20px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#scroll-overlay button:hover {
+    background: var(--primary);
+    color: var(--bg-color);
+    transform: translateY(-2px);
+}
+
+#scroll-overlay button.active {
+    background: var(--secondary);
+    border-color: var(--secondary);
+    color: white;
+}
+
+/* Section Labels */
+.section-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #666;
+    margin-bottom: 10px;
+    margin-top: 16px;
+}
+
+/* Emotion Chart / Radar */
+.chart-area {
+    margin-top: 0;
+    min-height: 150px;
+    width: 100%;
+    border: 1px dashed var(--border);
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #666;
+    font-size: 0.8rem;
+    overflow: hidden;
+}
+
+/* AI Logs */
+#ai-logs {
+    flex: 1;
+    min-height: 120px;
+    max-height: 220px;
+    overflow-y: auto;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    padding: 12px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.75rem;
+    line-height: 1.5;
+    border: 1px solid var(--border);
+}
+
+.log-system {
+    color: var(--primary);
+    opacity: 0.7;
+    margin-bottom: 4px;
+}
+
+.log-entry {
+    color: #bbb;
+    margin-bottom: 4px;
+}
+
+/* Controls */
+.controls {
+    margin-top: auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+#start-panel {
+    margin-top: 16px;
+}
+
+#start-panel button {
+    grid-column: span 2;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: var(--bg-color);
+    font-weight: 700;
+    font-size: 1rem;
+    padding: 14px;
+    border: none;
+}
+
+#start-panel button:hover {
+    filter: brightness(1.2);
+    transform: translateY(-2px);
+}
+
+.btn-icon {
+    margin-right: 6px;
+}
+
+#active-controls {
+    margin-top: 12px;
+}
+
+/* Mood Grid */
+.mood-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.mood-btn {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.mood-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--primary);
+    transform: translateY(-2px);
+}
+
+/* Generic Button Styles */
+button {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    color: white;
+    padding: 12px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    font-family: var(--font-main);
+}
+
+button:hover {
+    background: var(--primary);
+    color: var(--bg-color);
+    transform: translateY(-2px);
+}
+
+button.active {
+    background: var(--secondary);
+    border-color: var(--secondary);
+}
+
+/* Scrollbar styling for panels */
+.panel::-webkit-scrollbar {
+    width: 6px;
+}
+
+.panel::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.panel::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+.panel::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+#ai-logs::-webkit-scrollbar {
+    width: 4px;
+}
+
+#ai-logs::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 2px;
+}
+
+/* Responsive Breakpoints */
+@media (max-width: 1200px) {
+    #app-container {
+        grid-template-columns: 300px 1fr 300px;
+        gap: 16px;
+        padding: 16px;
+    }
+}
+
+@media (max-width: 992px) {
+    #app-container {
+        grid-template-columns: 260px 1fr 260px;
+        gap: 12px;
+        padding: 12px;
+    }
+
+    .logo {
+        font-size: 1.4rem;
+    }
+
+    .panel {
+        padding: 16px;
+    }
+}
+
+@media (max-width: 768px) {
+    #app-container {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr auto;
+        gap: 10px;
+        padding: 10px;
+        overflow-y: auto;
+    }
+
+    #left-panel {
+        order: 2;
+        max-height: 50vh;
+    }
+
+    #feed-viewport {
+        order: 1;
+        min-height: 40vh;
+    }
+
+    #right-panel {
+        order: 3;
+        max-height: 40vh;
+    }
+
+    #vision-viewport {
+        aspect-ratio: 16/9;
+        max-height: 200px;
+    }
+
+    .mood-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .mood-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    #scroll-overlay {
+        bottom: 12px;
+        right: 12px;
+    }
+
+    #scroll-overlay button {
+        padding: 10px 14px;
+        font-size: 0.75rem;
+    }
+
+    .hud-item {
+        font-size: 0.7rem;
+        padding: 8px 10px;
+    }
+}
+
