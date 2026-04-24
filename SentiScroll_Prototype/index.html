@@ -39,6 +39,18 @@
                     MOOD_MODE
                     <span id="mood-label" class="hud-value">TRENDING</span>
                 </div>
+                <div class="hud-item" style="border-left-color: #ffaa00;">
+                    DETECTED_AGE
+                    <span id="age-label" class="hud-value">--</span>
+                </div>
+                <div class="hud-item" style="border-left-color: #00ff88;">
+                    GENDER
+                    <span id="gender-label" class="hud-value">--</span>
+                </div>
+                <div class="hud-item" style="border-left-color: #ff66cc;">
+                    AGE_GROUP
+                    <span id="age-group-label" class="hud-value">DETECTING...</span>
+                </div>
             </div>
 
             <!-- Live Emotion Radar -->
@@ -114,6 +126,8 @@
 
     </div>
 
+    <!-- face-api.js for Age & Gender Detection -->
+    <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.13/dist/face-api.min.js"></script>
     <!-- YouTube IFrame API -->
     <script src="https://www.youtube.com/iframe_api"></script>
     <script type="module" src="app.js"></script>

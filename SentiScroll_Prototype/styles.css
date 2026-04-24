@@ -428,6 +428,11 @@ button.active {
     border-color: var(--secondary);
 }
 
+/* Age & Gender HUD specific colors */
+#age-label { color: #ffaa00 !important; }
+#gender-label { color: #00ff88 !important; }
+#age-group-label { color: #ff66cc !important; }
+
 /* Scrollbar styling for panels */
 .panel::-webkit-scrollbar {
     width: 6px;

@@ -1,33 +1,36 @@
-# SentiScroll Mood-Aware Feed Implementation
+# SentiScroll Age & Gender Implementation Plan
 
-## Completed Steps
-- [x] Analyze prototype files (index.html, app.js, styles.css)
-- [x] Launch local server for testing
-- [x] Confirm mood-based video plan with user
-- [x] Create TODO.md (this file)
-- [x] Rewrite app.js:
-  - [x] Add Sadness detection (frown + browInnerUp blendshapes)
-  - [x] Replace 5 hardcoded videos with 3 shuffled playlists (~20 each): happy, calm, trending
-  - [x] Map emotions to therapeutic target content (sad→happy, stressed→calm, bored→trending)
-  - [x] Implement random mood-based video selection (`playForMood`)
-  - [x] Update auto-skip logic with thresholds for bored, stressed, sad
-  - [x] Update HUD with Stress/Sad bars and TARGET_MOOD
-- [x] Refresh browser and verify behavior
-- [x] Fix: Replaced copyrighted video IDs with confirmed embed-friendly IDs
-- [x] Fix: Added onError handler for auto-skip on unavailable videos
-- [x] Fix: Added onStateChange ENDED for auto-advance behavior
+## Steps
+- [x] Analyze existing prototype (index.html, app.js, styles.css)
+- [x] Add face-api.js CDN to index.html
+- [x] Update index.html: Add Age, Gender, Age_Group HUD elements
+- [x] Update app.js:
+  - [x] Import/Load face-api.js age & gender models
+  - [x] Add state variables: `detectedAge`, `detectedGender`, `ageGroup`
+  - [x] Create age-group based playlists (kids, teen, adult) × moods
+  - [x] Add `detectAgeGender()` function with throttled detection (every 2s)
+  - [x] Add `resolveAgeMood()` helper for age-aware playlist resolution
+  - [x] Modify `playForMood()` to select age-aware content
+  - [x] Integrate detection into `predictWebcam()` loop
+  - [x] Update agent decision loop to use age-aware mood resolution
+  - [x] Update HUD with Age, Gender, and Age Group badges
+  - [x] Update agent logs for age/gender decisions
+- [x] Update styles.css for new age/gender HUD elements
+- [x] Test and verify locally
 
-## Current Fixes & Improvements (Completed)
-- [x] Fix CSS: Add missing styles for all HTML elements
-  - [x] Vision viewport, canvas, labels
-  - [x] HUD stats and values
-  - [x] Player container and scroll overlay
-  - [x] Decorative elements (scanlines, corner mark)
-  - [x] Mood grid and buttons
-  - [x] Log panel and action HUD
-  - [x] Section labels and control panels
-- [x] Fix JS: Add `sentiscroll:forcemood` event listener
-- [x] Fix JS: Add `browInnerUp` to sadness detection
-- [x] Fix JS: Ensure `lastVideoId` set on initial player load (edge case)
-- [x] Fix CSS: Add responsive breakpoints
+## Implementation Summary
+
+### Age Groups
+- **Kids (0-13)**: Displays kid-friendly content (educational, nursery rhymes, kids songs, cartoons)
+- **Teen (13-22)**: Displays teen content (pop music, educational, science, vlogs)
+- **Adult (22+)**: Displays adult good content (trending, music, documentaries, podcasts)
+
+### Technical Details
+- Uses **MediaPipe FaceLandmarker** for real-time emotion detection (happy, sad, stressed, bored, neutral)
+- Uses **face-api.js** (`@vladmandic/face-api`) for age and gender detection via `TinyFaceDetector` + `AgeGenderNet`
+- Age/gender detection runs throttled at **every 2 seconds** to preserve performance
+- All content playlists are organized as `{ageGroup}{Mood}` (e.g., `kidsHappy`, `teenEnergy`, `adultCalm`)
+- The agent automatically resolves mood to age-appropriate playlists using `resolveAgeMood()`
+- Manual mood override buttons are mapped to age-aware playlists
+- All video content is age-appropriate and safe for respective groups
 
