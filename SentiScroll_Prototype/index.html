@@ -6,7 +6,15 @@
     <title>SentiScroll AI | Emotion-Aware Agentic Feed</title>
     <meta name="description" content="SentiScroll AI uses real-time facial emotion detection to autonomously curate your video feed — protecting you from digital content fatigue.">
     <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js');
+            });
+        }
+    </script>
 </head>
 <body>
     <div id="app-container" class="mood-neutral">

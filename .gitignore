@@ -5,3 +5,11 @@ SentiScroll_Prototype/config.js
 node_modules/
 .DS_Store
 *.log
+
+# Mobile Build Artifacts
+SentiScroll_Mobile/node_modules/
+SentiScroll_Mobile/android/app/build/
+SentiScroll_Mobile/android/build/
+SentiScroll_Mobile/android/local.properties
+SentiScroll_Mobile/android/.gradle/
+SentiScroll_Mobile/android/.idea/
