@@ -18,8 +18,8 @@ let fpsCounter = 0;
 let lastFpsTime = performance.now();
 let boredTimer = 0;
 let negativeTimer = 0;
-const BORED_SKIP_THRESHOLD = 5000;   // ms of boredom before auto-skip
-const NEGATIVE_SKIP_THRESHOLD = 8000; // ms of stress/sadness before calming switch
+const BORED_SKIP_THRESHOLD = 2000;   // 2s of boredom/neutrality before energy boost
+const NEGATIVE_SKIP_THRESHOLD = 3000; // 3s of stress/sadness before calm switch
 
 // ---- AGE & GENDER STATE ----
 let detectedAge = null;
@@ -29,6 +29,23 @@ let faceApiModelsLoaded = false;
 let lastAgeGenderCheck = 0;
 const AGE_GENDER_INTERVAL = 2000; // Run face-api every 2 seconds to save performance
 
+// ---- GEMINI & ANALYTICS STATE ----
+let GEMINI_API_KEY = ""; // Loaded dynamically from config.json
+let blinkBuffer = [];
+let lastBlinkScore = 0; // Renamed to avoid collision
+let lastBpmSampleTime = 0; // Dedicated timestamp for analytics
+let detectedBPM = 0;
+let focusScore = 100;
+let initialAlignmentPerformed = false;
+let sessionStats = {
+    startTime: Date.now(),
+    emotionLog: [], 
+    pivots: 0,
+    blinkRates: []
+};
+let lastRadarUpdateTime = 0;
+let dialogueTimeout;
+
 // ============================================
 // VIDEO PLAYLISTS — AGE & MOOD ORGANIZED
 // ============================================
@@ -36,11 +53,6 @@ const safeIds = [
     'jNQXAC9IVRw', 'M7lc1UVf-VE', 'dQw4w9WgXcQ',
     '9bZkp7q19f0', 'O-idst3Zp8o', 'Mwt35SEeR9w', '7_L7Xh7z7_0'
 ];
-
-// All content below is age-appropriate:
-// Kids: educational, nursery rhymes, kids songs, cartoons
-// Teen: pop music, educational, science, vlogs
-// Adult: trending, music, documentaries, podcasts
 
 const playlists = {
     // ---- KIDS (0-13) ----
@@ -169,6 +181,58 @@ function getRandomId(mood) {
 }
 
 // ============================================
+// GEMINI AGENTIC REASONING
+// ============================================
+async function callGeminiAgent(context) {
+    if (!GEMINI_API_KEY || GEMINI_API_KEY === "YOUR_GEMINI_API_KEY_HERE" || GEMINI_API_KEY === "") {
+        updateAgentDialogue(`[DEMO MODE] I noticed you're feeling ${context.emotion.toUpperCase()}. Adjusting your experience...`);
+        return;
+    }
+
+    try {
+        const prompt = `You are SentiScroll AI, an empathetic agent. 
+        Context: User (${context.ageGroup}, ${context.gender}) is feeling ${context.emotion}. 
+        Action Taken: ${context.action}. 
+        Generate a one-sentence supportive and futuristic response to the user. Keep it under 20 words.`;
+
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }]
+            })
+        });
+
+        const data = await response.json();
+        if (data.candidates && data.candidates[0].content.parts[0].text) {
+            const aiText = data.candidates[0].content.parts[0].text.trim();
+            updateAgentDialogue(aiText);
+        }
+    } catch (err) {
+        console.error("Gemini API Error:", err);
+    }
+}
+
+function updateAgentDialogue(text) {
+    const container = document.getElementById('agent-dialogue-container');
+    const textEl = document.getElementById('agent-text');
+    if (container && textEl) {
+        container.style.display = 'block';
+        container.style.opacity = '1';
+        textEl.textContent = text;
+        
+        // Auto-hide dialogue after 8 seconds
+        if (dialogueTimeout) clearTimeout(dialogueTimeout);
+        dialogueTimeout = setTimeout(() => {
+            container.style.opacity = '0';
+            setTimeout(() => {
+                if (container.style.opacity === '0') container.style.display = 'none';
+            }, 500); // Wait for CSS transition
+        }, 8000);
+    }
+}
+
+// ============================================
 // APP LIFECYCLE
 // ============================================
 window.startSentiScroll = async function() {
@@ -179,6 +243,16 @@ window.startSentiScroll = async function() {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         logAI("ERROR: Browser blocks camera. USE LOCALHOST:8000!");
         return;
+    }
+
+    // Load Config
+    try {
+        const response = await fetch('config.json');
+        const config = await response.json();
+        GEMINI_API_KEY = config.GEMINI_API_KEY;
+        logAI("AI Config loaded securely.");
+    } catch (e) {
+        logAI("AI Config not found. Running in DEMO MODE.");
     }
 
     await initVision();
@@ -276,6 +350,20 @@ async function detectAgeGender() {
                 const groupLabel = ageGroup === 'kids' ? 'KIDS (0-13)' : ageGroup === 'teen' ? 'TEEN (13-22)' : 'ADULT (22+)';
                 ageGroupEl.textContent = groupLabel;
             }
+
+            // Trigger immediate alignment on first detection
+            if (!initialAlignmentPerformed && player) {
+                initialAlignmentPerformed = true;
+                logAI(`Initial alignment: Age ${detectedAge} [${ageGroup.toUpperCase()}]. Loading content...`);
+                playForMood(currentMood);
+                
+                // Hide loader
+                const loader = document.getElementById('player-loader');
+                if (loader) {
+                    loader.style.opacity = '0';
+                    setTimeout(() => { loader.style.display = 'none'; }, 800);
+                }
+            }
         }
     } catch (err) {
         console.error("Age/Gender detection error:", err);
@@ -293,6 +381,11 @@ async function startWebcam() {
         video.addEventListener("loadeddata", predictWebcam);
         logAI("Vision Online. Monitoring emotional state & demographics.");
         document.getElementById('bio-status').textContent = 'LIVE';
+        
+        // Start independent Age/Gender timer
+        setInterval(() => {
+            detectAgeGender();
+        }, AGE_GENDER_INTERVAL);
     } catch (err) {
         logAI("CAMERA_ERROR: " + err.message);
     }
@@ -320,6 +413,15 @@ function initYouTube() {
                 'onReady': (e) => {
                     e.target.playVideo();
                     logAI("Player ready. Streaming content.");
+                    
+                    // Secondary loader hide if age detection hasn't fired yet
+                    setTimeout(() => {
+                        const loader = document.getElementById('player-loader');
+                        if (loader && loader.style.display !== 'none') {
+                            loader.style.opacity = '0';
+                            setTimeout(() => { loader.style.display = 'none'; }, 800);
+                        }
+                    }, 3000);
                 },
                 'onError': (e) => {
                     if (lastVideoId) failedIds.add(lastVideoId);
@@ -437,9 +539,7 @@ function logAI(msg) {
 let lastTime = -1;
 
 async function predictWebcam() {
-    if (video && lastTime !== video.currentTime) {
-        lastTime = video.currentTime;
-
+    if (video) {
         const now = performance.now();
         const results = faceLandmarker.detectForVideo(video, now);
 
@@ -452,14 +552,8 @@ async function predictWebcam() {
             lastFpsTime = now;
         }
 
-        // Age & Gender detection (throttled)
-        if (now - lastAgeGenderCheck >= AGE_GENDER_INTERVAL) {
-            lastAgeGenderCheck = now;
-            detectAgeGender();
-        }
-
         if (results.faceBlendshapes && results.faceBlendshapes.length > 0) {
-            processEmotions(results.faceBlendshapes[0].categories);
+            processEmotions(results.faceBlendshapes[0].categories, now);
         } else {
             // No face detected
             document.getElementById('bio-status').textContent = 'NO FACE';
@@ -471,12 +565,14 @@ async function predictWebcam() {
 // ============================================
 // EMOTION PROCESSING & AGENT DECISION LOOP
 // ============================================
-function processEmotions(blendshapes) {
-    // --- Extract key blendshape scores ---
-    const get = (name) => {
-        const found = blendshapes.find(b => b.categoryName === name);
-        return found ? found.score : 0;
-    };
+function processEmotions(blendshapes, now) {
+    // Optimization: Map categories to an object for O(1) lookup
+    const shapes = {};
+    for (const b of blendshapes) {
+        shapes[b.categoryName] = b.score;
+    }
+
+    const get = (name) => shapes[name] || 0;
 
     // Blink rate (low blink = zoned out / bored)
     const eyeBlinkLeft  = get('eyeBlinkLeft');
@@ -487,6 +583,25 @@ function processEmotions(blendshapes) {
     const mouthSmileLeft  = get('mouthSmileLeft');
     const mouthSmileRight = get('mouthSmileRight');
     const smileScore = (mouthSmileLeft + mouthSmileRight) / 2;
+
+    // Track Blinks (Feature #2) - Fixed logic
+    if (avgBlink > 0.6 && lastBlinkScore <= 0.6) {
+        const now = performance.now();
+        blinkBuffer.push(now);
+        // Keep only last 60 seconds
+        blinkBuffer = blinkBuffer.filter(t => now - t < 60000);
+        detectedBPM = blinkBuffer.length;
+        const bpmEl = document.getElementById('bpm-label');
+        if (bpmEl) bpmEl.textContent = detectedBPM;
+    }
+    lastBlinkScore = avgBlink;
+
+    // Track Focus (Feature #2)
+    // eyeLookIn/Out/Up/Down - High variance = distracted
+    const lookSum = get('eyeLookInLeft') + get('eyeLookOutLeft') + get('eyeLookUpLeft') + get('eyeLookDownLeft');
+    focusScore = Math.max(0, Math.min(100, 100 - (lookSum * 50)));
+    const focusEl = document.getElementById('focus-label');
+    if (focusEl) focusEl.textContent = `${focusScore.toFixed(0)}%`;
 
     // Brow furrow (stress / confusion)
     const browDownLeft  = get('browDownLeft');
@@ -505,25 +620,54 @@ function processEmotions(blendshapes) {
     const jawOpen = get('jawOpen');
 
     // --- Map to emotional state scores (0-1) ---
+    // Increased multipliers for higher sensitivity
+    // Lowered multipliers for better balance and less "Sad" stickiness
     emotionData.happy    = Math.min(1, smileScore * 2.5 + jawOpen * 0.4);
-    emotionData.bored    = Math.min(1, (1 - smileScore) * (1 - browFurrow) * (avgBlink < 0.15 ? 1.5 : 0.8));
-    emotionData.stressed = Math.min(1, browFurrow * 2.2 + jawOpen * 0.3);
-    emotionData.sad      = Math.min(1, frownScore * 2.8 + browInnerUp * 1.5 + (1 - smileScore) * 0.3);
-    emotionData.neutral  = Math.max(0, 1 - emotionData.happy - emotionData.bored - emotionData.stressed - emotionData.sad);
+    emotionData.stressed = Math.min(1, browFurrow * 2.0 + jawOpen * 0.3);
+    emotionData.sad      = Math.min(1, frownScore * 2.0 + browInnerUp * 1.5);
+    
+    // Boredom now requires low activity across other emotions + low blink rate
+    const otherActivity = emotionData.happy + emotionData.stressed + emotionData.sad;
+    emotionData.bored = Math.min(1, Math.max(0, (1 - otherActivity) * (avgBlink < 0.12 ? 1.2 : 0.4)));
+
+    // Neutral is the remainder
+    emotionData.neutral = Math.max(0, 1 - (emotionData.happy + emotionData.stressed + emotionData.sad + emotionData.bored));
 
     // Clamp neutral
     emotionData.neutral = Math.min(1, Math.max(0, emotionData.neutral));
 
     // Update UI
     updateBioStatus();
-    updateEmotionRadar();
+    
+    // Performance Optimization: Throttle radar updates to 10 FPS
+    if (now - lastRadarUpdateTime > 100) {
+        updateEmotionRadar();
+        lastRadarUpdateTime = now;
+    }
+    
+    const dominant = getDominantEmotion();
+    updateTheme(dominant); // Feature #3: Adaptive UI
+
+    // Track for analytics (Feature #4)
+    // Sample emotion every 2 seconds roughly, and limit log size to 1000
+    if (Math.random() < 0.02) {
+        if (sessionStats.emotionLog.length < 1000) {
+            sessionStats.emotionLog.push(dominant);
+        } else {
+            sessionStats.emotionLog.shift();
+            sessionStats.emotionLog.push(dominant);
+        }
+    }
+
+    if (now - lastBpmSampleTime > 10000) { // Sample BPM every 10 seconds
+        sessionStats.blinkRates.push(detectedBPM);
+        if (sessionStats.blinkRates.length > 500) sessionStats.blinkRates.shift();
+        lastBpmSampleTime = now;
+    }
 
     if (!isAgentActive) return;
 
     // --- Agent Decision Loop ---
-    const dominant = getDominantEmotion();
-    const now = performance.now();
-
     if (dominant === 'bored' || dominant === 'neutral') {
         // Accumulate boredom timer
         if (boredTimer === 0) boredTimer = now;
@@ -534,9 +678,18 @@ function processEmotions(blendshapes) {
             const resolvedMood = resolveAgeMood(newMood);
             if (currentMood !== resolvedMood) {
                 currentMood = resolvedMood;
-                logAI(`Agent: Boredom detected for ${(boredDuration/1000).toFixed(1)}s -> Switching to ENERGY BOOST content [${(ageGroup || 'adult').toUpperCase()}].`);
+                logAI(`Agent: Boredom/Neutrality detected -> Switching to ENERGY mode [${(ageGroup || 'adult').toUpperCase()}].`);
                 playForMood(currentMood);
                 showAiAction('AUTO_SKIPPING: ENERGY MODE');
+                sessionStats.pivots++;
+                
+                // Feature #1: Gemini Call
+                callGeminiAgent({
+                    emotion: 'bored',
+                    ageGroup: ageGroup || 'adult',
+                    gender: detectedGender || 'unknown',
+                    action: 'Switched to Energy Boost content'
+                });
             }
             boredTimer = 0;
         }
@@ -556,6 +709,15 @@ function processEmotions(blendshapes) {
                 logAI(`Agent: Negative state (${dominant}) for ${(negativeDuration/1000).toFixed(1)}s -> Switching to CALM content [${(ageGroup || 'adult').toUpperCase()}].`);
                 playForMood(currentMood);
                 showAiAction('AUTO_PIVOT: CALMING MODE');
+                sessionStats.pivots++;
+
+                // Feature #1: Gemini Call
+                callGeminiAgent({
+                    emotion: dominant,
+                    ageGroup: ageGroup || 'adult',
+                    gender: detectedGender || 'unknown',
+                    action: 'Switched to Calming mode to reduce stress'
+                });
             }
             negativeTimer = 0;
         }
@@ -569,9 +731,69 @@ function processEmotions(blendshapes) {
             currentMood = happyMood;
             logAI(`Agent: Joy detected! Serving HAPPY content [${(ageGroup || 'adult').toUpperCase()}].`);
             playForMood(currentMood);
+
+            // Feature #1: Gemini Call
+            callGeminiAgent({
+                emotion: 'happy',
+                ageGroup: ageGroup || 'adult',
+                gender: detectedGender || 'unknown',
+                action: 'Maintaining happy content pool'
+            });
         }
     }
 }
+
+// ============================================
+// ADAPTIVE UI: THEME SWITCHER
+// ============================================
+function updateTheme(mood) {
+    const app = document.getElementById('app-container');
+    if (!app) return;
+    
+    // Remove all mood classes
+    app.classList.remove('mood-happy', 'mood-stressed', 'mood-sad', 'mood-bored', 'mood-neutral');
+    // Add current one
+    app.classList.add(`mood-${mood}`);
+}
+
+// ============================================
+// ANALYTICS MODAL LOGIC
+// ============================================
+window.showAnalytics = function() {
+    const modal = document.getElementById('analytics-modal');
+    if (!modal) return;
+
+    // Safety Check: If no data yet
+    if (sessionStats.emotionLog.length === 0) {
+        document.getElementById('stat-peak-emotion').textContent = "CALIBRATING";
+        document.getElementById('stat-avg-bpm').textContent = "--";
+        document.getElementById('stat-focus-score').textContent = "--";
+        document.getElementById('stat-ai-pivots').textContent = "0";
+        modal.style.display = 'flex';
+        return;
+    }
+
+    // Calculate stats
+    const counts = {};
+    sessionStats.emotionLog.forEach(e => counts[e] = (counts[e] || 0) + 1);
+    const mostFrequent = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
+
+    const avgBPM = sessionStats.blinkRates.length > 0 
+        ? Math.round(sessionStats.blinkRates.reduce((a,b) => a+b) / sessionStats.blinkRates.length)
+        : detectedBPM;
+
+    // Update UI
+    document.getElementById('stat-peak-emotion').textContent = mostFrequent.toUpperCase();
+    document.getElementById('stat-avg-bpm').textContent = avgBPM;
+    document.getElementById('stat-focus-score').textContent = `${focusScore.toFixed(0)}%`;
+    document.getElementById('stat-ai-pivots').textContent = sessionStats.pivots;
+
+    modal.style.display = 'flex';
+};
+
+window.hideAnalytics = function() {
+    document.getElementById('analytics-modal').style.display = 'none';
+};
 
 // ============================================
 // HELPER: RESOLVE MOOD TO AGE-SPECIFIC PLAYLIST

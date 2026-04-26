@@ -1,0 +1,7 @@
+.env
+config.json
+SentiScroll_Prototype/config.json
+SentiScroll_Prototype/config.js
+node_modules/
+.DS_Store
+*.log

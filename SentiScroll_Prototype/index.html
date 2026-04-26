@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div id="app-container">
+    <div id="app-container" class="mood-neutral">
 
         <!-- ===== LEFT PANEL: Vision + Biometrics ===== -->
         <aside class="panel" id="left-panel">
@@ -23,6 +23,7 @@
                 <video id="webcam" autoplay playsinline></video>
                 <canvas id="output_canvas"></canvas>
                 <div id="vision-label">BIOMETRIC FEED</div>
+                <div id="privacy-badge">PRIVACY SHIELD: ACTIVE</div>
             </div>
 
             <!-- HUD Stats -->
@@ -51,6 +52,14 @@
                     AGE_GROUP
                     <span id="age-group-label" class="hud-value">DETECTING...</span>
                 </div>
+                <div class="hud-item" style="border-left-color: #00f2ff;">
+                    EYE_BPM
+                    <span id="bpm-label" class="hud-value">--</span>
+                </div>
+                <div class="hud-item" style="border-left-color: #bc13fe;">
+                    FOCUS_LVL
+                    <span id="focus-label" class="hud-value">--</span>
+                </div>
             </div>
 
             <!-- Live Emotion Radar -->
@@ -76,6 +85,13 @@
             <!-- YouTube Player -->
             <div id="player-container">
                 <div id="player"></div>
+                <div id="player-loader">
+                    <div class="loader-content">
+                        <div class="spinner"></div>
+                        <p>CALIBRATING BIOMETRIC FEED...</p>
+                        <span id="loading-subtext">Waiting for face detection to personalize content</span>
+                    </div>
+                </div>
             </div>
 
             <!-- Mode Buttons (bottom-right) -->
@@ -102,6 +118,14 @@
                 <p class="log-entry">[SYSTEM] Initializing Agent Loop...</p>
             </div>
 
+            <!-- Agent Dialogue Bubble -->
+            <div id="agent-dialogue-container">
+                <div class="agent-status-mini">Agentic Reasoning</div>
+                <div class="agent-bubble" id="agent-text">
+                    "Analyzing your biometric patterns to optimize your experience..."
+                </div>
+            </div>
+
             <!-- Controls -->
             <div class="controls" id="start-panel">
                 <button id="btn-start" onclick="startSentiScroll()">
@@ -122,8 +146,41 @@
                 <button class="mood-btn" onclick="forceMood('calm')">🌊 Calm</button>
                 <button class="mood-btn" onclick="forceMood('imagineDragons')">⚡ Energy</button>
             </div>
+
+            <div class="controls" style="margin-top: 16px;">
+                <button onclick="showAnalytics()" style="grid-column: span 2; background: var(--glass);">View Session Report</button>
+            </div>
         </aside>
 
+    </div>
+
+    <!-- Analytics Modal -->
+    <div id="analytics-modal">
+        <div class="modal-content">
+            <h2 class="logo">SESSION INSIGHTS</h2>
+            <p style="color:#888; font-size:0.8rem; margin-top:8px;">SentiScroll AI Biometric Analysis Summary</p>
+            
+            <div class="analytics-grid">
+                <div class="analytics-card">
+                    <h3>Peak Emotion</h3>
+                    <div class="value" id="stat-peak-emotion">HAPPY</div>
+                </div>
+                <div class="analytics-card">
+                    <h3>Avg. BPM</h3>
+                    <div class="value" id="stat-avg-bpm">12</div>
+                </div>
+                <div class="analytics-card">
+                    <h3>Focus Score</h3>
+                    <div class="value" id="stat-focus-score">85%</div>
+                </div>
+                <div class="analytics-card">
+                    <h3>AI Pivots</h3>
+                    <div class="value" id="stat-ai-pivots">0</div>
+                </div>
+            </div>
+
+            <button onclick="hideAnalytics()" style="width:100%; background: var(--primary); color: var(--bg-color);">RETURN TO FEED</button>
+        </div>
     </div>
 
     <!-- face-api.js for Age & Gender Detection -->

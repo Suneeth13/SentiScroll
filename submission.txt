@@ -1,0 +1,16 @@
+Problem: Today's video apps (like YouTube,Facebook,Instagram,snapchat and TikTok) only care about how much time you spend watching.
+ They don't know if you are actually enjoying the videos or if you are just tired and "doomscrolling." 
+ These apps are "emotionally blind"—they look at what you clicked in the past but ignore how you feel right now.
+  For example, they might show stressful videos to someone who is already stressed. Also, current age filters are easy
+   to trick and don't check who is actually sitting in front of the screen.
+
+Solution: SentiScroll AI. Our system uses a camera and AI to understand the user's feelings and age in real-time.
+
+Face Reading: It uses your camera to see if you are happy, sad, or bored.
+Eye Tracking: It counts how often you blink and where you look to detect eye strain and tiredness.
+Smart AI Agent: Using Gemini AI, a friendly digital assistant talks to you and changes the videos automatically
+ if it sees you are unhappy or bored.
+Privacy: All face data is processed on your device and is never uploaded to the internet.
+Value: SentiScroll makes apps safer and healthier. Instead of just showing random videos, it "understands" 
+how you feel. It helps prevent digital tiredness and ensures children only see safe content, making the internet better
+ for your mental health.
